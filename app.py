@@ -4,16 +4,19 @@ from agent import agent
 from database import initialize_database, load_messages, save_message
 
 
-SESSION_ID = "default-session"
-
-
 def main() -> None:
     initialize_database()
 
-    messages = load_messages(SESSION_ID)
+    session_id = input("Enter session ID: ").strip()
+
+    if not session_id:
+        session_id = "default-session"
+
+    messages = load_messages(session_id)
 
     print("Simple LangChain Agent")
     print("Type 'exit' to stop.")
+    print(f"Session: {session_id}")
     print(f"Loaded {len(messages)} saved messages.\n")
 
     while True:
@@ -58,18 +61,18 @@ def main() -> None:
             assistant_content = str(final_message.content)
 
             save_message(
-                SESSION_ID,
+                session_id,
                 "user",
                 user_input,
             )
 
             save_message(
-                SESSION_ID,
+                session_id,
                 "assistant",
                 assistant_content,
             )
 
-            messages = load_messages(SESSION_ID)
+            messages = load_messages(session_id)
 
             print(f"Agent: {assistant_content}\n")
 
