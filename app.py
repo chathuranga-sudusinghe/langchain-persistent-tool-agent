@@ -1,7 +1,12 @@
 from langchain_core.messages import trim_messages
 
 from agent import agent
-from database import initialize_database, load_messages, save_message
+from database import (
+    clear_messages,
+    initialize_database,
+    load_messages,
+    save_message,
+)
 
 
 def main() -> None:
@@ -15,7 +20,7 @@ def main() -> None:
     messages = load_messages(session_id)
 
     print("Simple LangChain Agent")
-    print("Type 'exit' to stop.")
+    print("Type 'exit' to stop or '/clear' to clear this session.")
     print(f"Session: {session_id}")
     print(f"Loaded {len(messages)} saved messages.\n")
 
@@ -29,6 +34,13 @@ def main() -> None:
         if user_input.lower() == "exit":
             print("Agent: Goodbye!")
             break
+
+        if user_input.lower() == "/clear":
+            clear_messages(session_id)
+            messages = []
+
+            print("Agent: Current session history cleared.\n")
+            continue
 
         if not user_input:
             print("Agent: Please enter a message.\n")

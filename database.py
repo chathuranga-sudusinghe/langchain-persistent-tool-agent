@@ -68,6 +68,16 @@ def load_messages(session_id: str) -> list[dict[str, str]]:
         for role, content in rows
     ]
 
+def clear_messages(session_id: str) -> None:
+    delete_query = """
+        DELETE FROM chat_messages
+        WHERE session_id = %s;
+    """
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(delete_query, (session_id,))
+
 
 if __name__ == "__main__":
     initialize_database()
