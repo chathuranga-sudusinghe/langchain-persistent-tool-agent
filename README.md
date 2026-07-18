@@ -1,63 +1,50 @@
-# Simple LangChain Agent
+# LangChain Persistent Tool Agent
 
-A simple but production-oriented LangChain chat agent with automatic tool selection, continuous terminal interaction, short-term conversation memory, PostgreSQL persistence, Docker Compose, and basic error handling.
+A focused LangChain agent project demonstrating automatic tool selection, continuous terminal interaction, multi-session conversation handling, PostgreSQL-backed persistent memory, Docker Compose, and basic automated tests.
 
-This project demonstrates the core logic behind a larger Agentic AI system without adding unnecessary complexity.
+The project is intentionally compact. Its purpose is to show the core execution and memory logic used in larger Agentic AI systems without introducing unnecessary infrastructure.
 
-## Project Overview
+## Key Features
 
-The agent can:
-
-- communicate with an OpenAI model through LangChain
-- automatically select and execute tools
-- maintain conversation context during a running session
-- store user and assistant messages in PostgreSQL
-- reload previous conversation history after restarting the application
-- limit the amount of history sent to the model
-- handle empty input, keyboard interruption, and unexpected application errors
+- OpenAI model integration through LangChain
+- Automatic tool selection and execution
+- Continuous terminal chat loop
+- Multiple conversation sessions using session IDs
+- In-memory conversation context during runtime
+- PostgreSQL-backed persistent chat history
+- Conversation restoration after application restart
+- `/clear` command for deleting the active session history
+- Message-history trimming before model invocation
+- Basic input and runtime error handling
+- Pytest coverage for the calculator tool
+- Docker Compose setup for local PostgreSQL
 
 ## Architecture
 
 ```text
 User
   ↓
-Terminal application
+Terminal chat application
   ↓
-Load conversation history from PostgreSQL
+Load selected session history from PostgreSQL
   ↓
-Trim old messages
+Append current user message
+  ↓
+Trim retained conversation context
   ↓
 LangChain agent
   ↓
 OpenAI model
   ↓
-Tool selection
+Automatic tool selection
   ├── Multiply numbers
-  ├── Get current time
+  ├── Get current local time
   └── Get project information
   ↓
 Final response
   ↓
-Save user and assistant messages in PostgreSQL
+Save user and assistant messages to PostgreSQL
 ```
-
-## Main Learning Objectives
-
-This project demonstrates:
-
-- LangChain model integration
-- system prompts
-- user and assistant messages
-- LangChain tools
-- automatic tool selection
-- agent execution loops
-- session memory
-- persistent conversation memory
-- PostgreSQL integration
-- Docker Compose
-- environment variable management
-- conversation-history trimming
-- basic error handling
 
 ## Technology Stack
 
@@ -65,17 +52,16 @@ This project demonstrates:
 - LangChain
 - LangChain OpenAI integration
 - OpenAI API
-- PostgreSQL
+- PostgreSQL 17
 - Psycopg 3
-- Docker
-- Docker Compose
+- Docker and Docker Compose
 - python-dotenv
+- Pytest
 
 ## Project Structure
 
 ```text
-simple-langchain-agent/
-├── .env
+langchain-persistent-tool-agent/
 ├── .env.example
 ├── .gitignore
 ├── README.md
@@ -85,47 +71,25 @@ simple-langchain-agent/
 ├── docker-compose.yml
 ├── llm.py
 ├── requirements.txt
-└── tools.py
+├── tools.py
+└── tests/
+    └── test_tools.py
 ```
 
-### File Responsibilities
+## File Responsibilities
 
-```text
-app.py
-→ terminal chat loop, message handling, history trimming, and error handling
+- `app.py` — terminal chat loop, session selection, history trimming, persistence flow, `/clear`, and error handling
+- `agent.py` — LangChain agent configuration and tool registration
+- `llm.py` — OpenAI model configuration
+- `tools.py` — LangChain-compatible tools
+- `database.py` — PostgreSQL connection, table initialization, save/load, and session-history deletion
+- `docker-compose.yml` — local PostgreSQL service and persistent volume
+- `tests/test_tools.py` — calculator tool tests
+- `.env.example` — safe environment-variable template
 
-agent.py
-→ LangChain agent configuration and registered tools
-
-llm.py
-→ OpenAI model configuration
-
-tools.py
-→ LangChain-compatible Python tools
-
-database.py
-→ PostgreSQL connection, table initialization, message saving, and message loading
-
-docker-compose.yml
-→ local PostgreSQL container configuration
-
-.env
-→ private environment variables and credentials
-
-.env.example
-→ example environment configuration without real secrets
-
-requirements.txt
-→ direct Python dependencies
-```
-
-## Current Tools
+## Available Tools
 
 ### Multiply Numbers
-
-Multiplies two numbers.
-
-Example:
 
 ```text
 You: What is 30 multiplied by 12?
@@ -134,10 +98,6 @@ Agent: 30 multiplied by 12 is 360.
 
 ### Current Time
 
-Returns the current local date and time.
-
-Example:
-
 ```text
 You: What is the current time?
 Agent: The current local date and time is ...
@@ -145,58 +105,45 @@ Agent: The current local date and time is ...
 
 ### Project Information
 
-Returns a short description of the project.
-
-Example:
-
 ```text
 You: Tell me about this project.
-Agent: This project is a simple LangChain agent project...
+Agent: This project demonstrates LangChain model integration, automatic tool selection, and persistent conversation memory.
 ```
 
-The agent can also answer normal questions without using a tool.
+The agent can also answer general questions without calling a tool.
 
 ## Prerequisites
-
-Install the following:
 
 - Python 3.10 or newer
 - Docker
 - Docker Compose
 - Git
-- an OpenAI API key
+- OpenAI API key
 
-## Installation
+## Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/simple-langchain-agent.git
-cd simple-langchain-agent
+git clone https://github.com/chathuranga-sudusinghe/langchain-persistent-tool-agent.git
+cd langchain-persistent-tool-agent
 ```
 
-### 2. Create a virtual environment
+### 2. Create and activate the virtual environment
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Upgrade pip
+### 3. Install dependencies
 
 ```bash
 python -m pip install --upgrade pip
-```
-
-### 4. Install dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
-## Environment Configuration
-
-Create the local environment file:
+### 4. Configure environment variables
 
 ```bash
 cp .env.example .env
@@ -214,38 +161,21 @@ POSTGRES_USER=langchain_user
 POSTGRES_PASSWORD=your_secure_postgres_password
 ```
 
-Do not commit `.env` to GitHub.
+Never commit `.env`.
 
-## PostgreSQL Setup
-
-Start PostgreSQL with Docker Compose:
+### 5. Start PostgreSQL
 
 ```bash
 docker compose up -d
 ```
 
-Check the container:
+Verify the service:
 
 ```bash
 docker compose ps
 ```
 
-Verify PostgreSQL readiness:
-
-```bash
-docker exec simple-langchain-postgres \
-  pg_isready -U langchain_user -d langchain_agent
-```
-
-Expected output:
-
-```text
-/var/run/postgresql:5432 - accepting connections
-```
-
-## Initialize the Database
-
-Run:
+### 6. Initialize the database
 
 ```bash
 python database.py
@@ -257,7 +187,39 @@ Expected output:
 Database table initialized successfully.
 ```
 
-The application creates the following table:
+### 7. Run the agent
+
+```bash
+python app.py
+```
+
+Example:
+
+```text
+Enter session ID: learning
+Simple LangChain Agent
+Type 'exit' to stop or '/clear' to clear this session.
+Session: learning
+Loaded 0 saved messages.
+
+You: My name is Chathuranga.
+Agent: Hello Chathuranga!
+
+You: What is my name?
+Agent: Your name is Chathuranga.
+```
+
+## Persistent Memory
+
+Each conversation is identified by a `session_id`.
+
+```text
+Session: learning
+Session: interview
+Session: project-notes
+```
+
+Messages are stored in PostgreSQL with:
 
 ```text
 chat_messages
@@ -268,139 +230,48 @@ chat_messages
 └── created_at
 ```
 
-## Run the Agent
+When the application restarts, it reloads only the selected session history.
 
-```bash
-python app.py
-```
+## Clear the Active Session
 
-Example:
+Inside the chat, run:
 
 ```text
-Simple LangChain Agent
-Type 'exit' to stop.
-Loaded 0 saved messages.
-
-You: My name is Chathuranga.
-Agent: Hello Chathuranga!
-
-You: What is my name?
-Agent: Your name is Chathuranga.
-
-You: What is 20 multiplied by 15?
-Agent: 20 multiplied by 15 is 300.
-
-You: exit
-Agent: Goodbye!
+/clear
 ```
 
-## Persistent Memory Test
+This deletes only the active session from PostgreSQL and clears its in-memory history. Other sessions remain unchanged.
 
-Run the application:
+## Conversation Trimming
 
-```bash
-python app.py
-```
+Before each model request, the application trims older retained messages and sends the latest context to the agent.
 
-Enter:
-
-```text
-You: My name is Chathuranga.
-You: exit
-```
-
-Start the application again:
-
-```bash
-python app.py
-```
-
-Ask:
-
-```text
-You: What is my name?
-```
-
-The agent should load the previous conversation from PostgreSQL and answer correctly.
-
-## Conversation Memory
-
-The project uses two memory levels.
-
-### Session Memory
-
-During execution, messages are stored in a Python list in RAM.
-
-```text
-messages = [
-    user message,
-    assistant message,
-    tool message,
-    ...
-]
-```
-
-### Persistent Memory
-
-User and assistant messages are stored in PostgreSQL.
-
-```text
-Application stops
-→ RAM memory is cleared
-→ PostgreSQL history remains
-→ history is loaded when the application starts again
-```
-
-## Conversation History Trimming
-
-The application limits the amount of conversation history sent to the model.
-
-```text
-Full retained history
-→ remove older messages
-→ keep recent messages
-→ send shorter context to the agent
-```
-
-This helps reduce:
+This reduces:
 
 - token usage
 - API cost
 - response latency
 - context-window growth
 
-The current implementation uses message-count-based trimming for learning purposes.
+The current implementation uses message-count-based trimming for learning clarity.
 
-## Error Handling
+## Testing
 
-The application handles:
+Run:
 
-- empty user input
-- `Ctrl+C`
-- end-of-file input
-- unexpected agent errors
-- failed requests without terminating the entire chat loop
-
-Example:
-
-```text
-Agent error: <error details>
-Please try again.
+```bash
+python -m pytest -v
 ```
+
+Current tests cover:
+
+- positive-number multiplication
+- negative-number multiplication
+- multiplication by zero
 
 ## Security
 
-The following files and values must not be committed:
-
-```text
-.env
-OpenAI API keys
-database passwords
-local virtual environments
-Python cache files
-```
-
-Recommended `.gitignore`:
+The repository excludes:
 
 ```gitignore
 .venv/
@@ -409,7 +280,9 @@ __pycache__/
 *.pyc
 ```
 
-## Docker Commands
+Do not commit API keys, database passwords, or local environment files.
+
+## Useful Docker Commands
 
 Start PostgreSQL:
 
@@ -423,71 +296,49 @@ Stop PostgreSQL:
 docker compose stop
 ```
 
-Stop and remove the container:
+Remove the container while retaining the database volume:
 
 ```bash
 docker compose down
 ```
 
-Stop and remove the container and stored database volume:
+Remove the container and stored database data:
 
 ```bash
 docker compose down -v
 ```
 
-Warning: the final command deletes the persisted PostgreSQL data.
+The final command permanently removes the local PostgreSQL volume.
 
-## Current Limitations
+## Current Scope and Limitations
 
-- one fixed session ID is used
-- no user authentication
+- terminal interface only
+- PostgreSQL connections are created per operation; no connection pool
 - tool-call metadata is not persisted
-- conversation history uses a simple message-count limit
+- message-count-based trimming rather than model-token counting
 - no streaming responses
-- no automated tests yet
-- no tracing or observability
-- no web API
-- PostgreSQL credentials are intended for local development
-- no semantic long-term memory
-- no vector search
+- no tracing or observability integration
+- no web API or authentication
+- no semantic memory or vector search
 
-## Planned Improvements
-
-- support multiple conversation sessions
-- generate or accept unique session IDs
-- persist tool-call metadata
-- add PostgreSQL connection pooling
-- add structured logging
-- add retry and timeout handling
-- use real token-based history trimming
-- add LangSmith tracing
-- add unit and integration tests
-- add Pytest agent evaluation
-- add FastAPI endpoints
-- add streaming responses
-- add Docker support for the Python application
-- add PostgreSQL with pgvector
-- add semantic long-term memory
-- add Retrieval-Augmented Generation
-- rebuild the workflow with LangGraph
-- add human approval for sensitive tools
+These limitations are intentional to preserve the project’s focused learning scope.
 
 ## Why This Project Matters
 
-The project is intentionally small, but it demonstrates the main execution flow used by larger Agentic AI systems:
+This repository demonstrates the essential lifecycle of a tool-using agent with persistent conversation state:
 
 ```text
 User input
-→ conversation context
+→ retained context
 → model reasoning
 → automatic tool selection
 → tool execution
 → final response
-→ persistent memory
+→ PostgreSQL persistence
 ```
 
-Production Agentic AI systems use the same foundation and add stronger reliability, evaluation, security, observability, deployment, and workflow control.
+The same foundation can later be extended with LangGraph, structured evaluation, streaming, tracing, semantic memory, and production deployment.
 
 ## License
 
-This project is available under the MIT License.
+MIT License.
